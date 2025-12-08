@@ -3,88 +3,39 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>cc</title>
+    <title>Storage Access Sync</title>
     <style>
         body {
-            font-family: 'Inter', sans-serif; /* Matches the other site */
-            transition: background-color 0.8s ease;
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            background-color: #f0f0f0; /* Default neutral background */
+            font-family: sans-serif;
+            transition: background-color 0.5s ease;
+            height: 100vh; margin: 0;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
         }
-
-        h1 {
-            margin-bottom: 20px;
-            color: #333;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-size: 1.5rem;
-        }
-
-        /* 
-           The iframe must be VISIBLE. 
-           We style it to look like a "Connect Wallet" or "Login" widget.
-        */
-        #sphere-widget {
-            width: 300px;
-            height: 120px;
-            border: none;
-            border-radius: 12px;
+        #color-widget {
+            width: 320px; height: 160px;
+            border: 2px solid #000; border-radius: 12px;
             background: white;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.15);
-            transition: opacity 0.5s;
-        }
-
-        /* Optional: Hide the widget nicely after syncing */
-        .synced #sphere-widget {
-            opacity: 0; 
-            pointer-events: none;
-        }
-        
-        .synced h1 {
-            color: white;
-            text-shadow: 0 2px 5px rgba(0,0,0,0.3);
         }
     </style>
 </head>
 <body>
 
-    <h1 id="status-text">Connect to Sphere</h1>
-
     <!-- 
-      CRITICAL: 'allow="storage-access"' is required.
-      It grants the iframe permission to ask the browser to unblock its storage.
+      CRITICAL FIX: 
+      Added 'allow="storage-access"' 
+      This tells the browser: "I permit this iframe to ask for permission to break out of the sandbox."
     -->
     <iframe 
-        id="sphere-widget" 
+        id="color-widget" 
         src="https://colorlog.in" 
         allow="storage-access">
     </iframe>
 
     <script>
-        const TARGET_ORIGIN = "https://colorlog.in";
-        const statusText = document.getElementById('status-text');
-
         window.addEventListener('message', (event) => {
-            // 1. SECURITY: Ignore messages from anywhere else
-            if (event.origin !== TARGET_ORIGIN) return;
-
-            const color = event.data;
-
-            // 2. VALIDATION: Ensure it looks like a hex color (e.g., #ff0000)
-            if (typeof color === 'string' && color.startsWith('#')) {
-                console.log("Received Color:", color);
-
-                // 3. APPLY: Set the background
-                document.body.style.backgroundColor = color;
-                
-                // 4. FEEDBACK: Update text and UI
-                statusText.textContent = "Color Synced: " + color.toUpperCase();
-                document.body.classList.add('synced');
+            if (event.origin !== "https://colorlog.in") return;
+            if (typeof event.data === 'string' && event.data.startsWith('#')) {
+                document.body.style.backgroundColor = event.data;
             }
         });
     </script>
