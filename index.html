@@ -3,7 +3,50 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Storage Access Sync</title>
+    <title>Color Clothing</title>
+    
+    <script src="https://js.stripe.com/v3/"></script>
+    <style>
+        :root {
+            --bg: #0d1117; --panel: #161b22; --border: #30363d;
+            --text: #c9d1d9; --accent: #da3633; --green: #238636;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Helvetica, Arial, sans-serif;
+            background-color: var(--bg); color: var(--text);
+            margin: 0; padding: 20px; display: flex; justify-content: center; align-items: center; min-height: 100vh;
+        }
+        .container { max-width: 900px; width: 100%; position: relative; }
+        .hidden { display: none !important; }
+        .card {
+            background: var(--panel); border: 1px solid var(--border);
+            border-radius: 12px; padding: 40px; text-align: center;
+            max-width: 400px; margin: 0 auto; box-shadow: 0 10px 50px rgba(0,0,0,0.5);
+        }
+        input {
+            width: 100%; padding: 12px; margin-bottom: 15px;
+            background: #0d1117; border: 1px solid var(--border);
+            color: white; border-radius: 6px; box-sizing: border-box;
+        }
+        .btn {
+            width: 100%; padding: 15px; border-radius: 6px;
+            font-weight: bold; cursor: pointer; border: none;
+            color: white; font-size: 1rem; margin-top: 10px;
+        }
+        .btn-primary { background: var(--accent); }
+        .btn-disabled { background: #333; color: #777; cursor: not-allowed; }
+        
+        .product-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+        .product-img { width: 100%; filter: drop-shadow(0 20px 30px rgba(0,0,0,0.6)); }
+        h1 { font-size: 3rem; margin: 0; text-transform: uppercase; line-height: 1; }
+        .price { font-size: 4rem; font-weight: 800; color: var(--accent); margin: 10px 0; }
+        .status-badge {
+            display: inline-block; padding: 5px 12px; border-radius: 20px;
+            font-size: 0.8rem; border: 1px solid #333; color: #777; margin-bottom: 20px;
+        }
+        .status-badge.online { border-color: var(--green); color: var(--green); background: rgba(35, 134, 54, 0.1); }
+        @media(max-width: 700px) { .product-grid { grid-template-columns: 1fr; text-align: center; } }
+    </style>
     <style>
         body {
             font-family: sans-serif;
@@ -17,14 +60,119 @@
             background: white;
         }
     </style>
+
 </head>
 <body>
 
-    <!-- 
-      CRITICAL FIX: 
-      Added 'allow="storage-access"' 
-      This tells the browser: "I permit this iframe to ask for permission to break out of the sandbox."
-    -->
+<div class="container">
+
+    <!-- VIEW 1: THE STORE -->
+    <div id="view-store" class="hidden">
+        <div class="product-grid">
+            <img src="transparentee.png" class="product-img">
+            <div>
+                <div id="store-status" class="status-badge">🔴 Store Offline</div>
+                <h1 id="p-title">Red Tshirt</h1>
+                <div id="p-price" class="price">$20.00</div>
+                
+                <button id="btn-buy" class="btn btn-disabled" disabled onclick="buyer.pay()">
+                    WAITING FOR SELLER...
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- VIEW 2: SHIPPING FORM -->
+    <div id="view-shipping" class="card hidden">
+        <h2>📦 Order Details</h2>
+        <input type="text" id="ship-name" placeholder="Full Name">
+        <input type="text" id="ship-addr" placeholder="Address">
+        <div style="display:flex; gap:10px;">
+            <input type="text" id="ship-city" placeholder="City">
+            <input type="text" id="ship-zip" placeholder="Zip">
+        </div>
+        <button class="btn btn-primary" onclick="buyer.sendOrder()">Confirm Order</button>
+        <div id="ship-msg" style="margin-top:10px; font-size:0.9rem;"></div>
+    </div>
+
+</div>
+
+<script type="module">
+    import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.16.0/+esm';
+
+    const APP_ID = 'red_tshirt_v2_secure';
+    const STRIPE_PK = 'pk_test_TYooMQauvdEDq54NiTphI7jx'; 
+    const STRIPE_PRICE = 'price_1Mot...'; // Replace with real price ID
+
+    let sendCmd;
+
+    const buyer = {
+        pay() {
+            const stripe = Stripe(STRIPE_PK);
+            stripe.redirectToCheckout({
+                lineItems: [{ price: STRIPE_PRICE, quantity: 1 }],
+                mode: 'payment',
+                successUrl: location.href.split('?')[0] + '?paid=1',
+                cancelUrl: location.href
+            });
+        },
+        handle(data) {
+            // Received Message from Admin
+            if(data.type === 'CATALOG') {
+                const badge = document.getElementById('store-status');
+                badge.className = 'status-badge online';
+                badge.innerText = '🟢 Store Online';
+                
+                const btn = document.getElementById('btn-buy');
+                btn.disabled = false;
+                btn.className = 'btn btn-primary';
+                btn.innerText = 'BUY NOW';
+            }
+            if(data.type === 'CONFIRMED') {
+                document.getElementById('ship-msg').innerHTML = `<span style="color:#238636">✅ Shipped! Tracking ID: ${data.id}</span>`;
+            }
+        },
+        sendOrder() {
+            const payload = {
+                name: document.querySelector('#ship-name').value,
+                addr: document.querySelector('#ship-addr').value,
+                city: document.querySelector('#ship-city').value,
+                zip: document.querySelector('#ship-zip').value
+            };
+            document.querySelector('#view-shipping button').innerText = "Transmitting to Seller...";
+            // Send P2P message
+            sendCmd({ type: 'ORDER', data: payload });
+        }
+    };
+
+    async function init() {
+        window.buyer = buyer;
+        
+        // P2P Setup
+        const room = joinRoom({ appId: APP_ID }, 'main_hall');
+        const [send, get] = room.makeAction('store_ops');
+        sendCmd = send;
+
+        // Listen for Admin
+        get((data) => buyer.handle(data));
+
+        room.onPeerJoin(id => {
+            console.log("Connected to peer, checking status...");
+            sendCmd({type: 'PING'}); // Ask admin if they are there
+        });
+
+        // Router
+        const isPaid = new URLSearchParams(window.location.search).get('paid');
+        if(isPaid) {
+            document.getElementById('view-shipping').classList.remove('hidden');
+        } else {
+            document.getElementById('view-store').classList.remove('hidden');
+        }
+    }
+
+    window.onload = init;
+</script>
+    
     <iframe 
         id="color-widget" 
         src="https://colorlog.in" 
