@@ -131,18 +131,6 @@
                 text-align: center;
             }
         }
-    </style>
-    <style>
-        body {
-            font-family: sans-serif;
-            transition: background-color 0.5s ease;
-            height: 100vh;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-        }
 
         #color-widget {
             width: 320px;
@@ -190,18 +178,12 @@
 
     </div>
 
-    <script type="module">
-        import { joinRoom } from 'https://cdn.jsdelivr.net/npm/trystero@0.16.0/+esm';
-
-        const APP_ID = 'red_tshirt_v2_secure';
-        const STRIPE_PK = 'pk_test_TYooMQauvdEDq54NiTphI7jx';
-        const STRIPE_PRICE = 'price_1Mot...'; // Replace with real price ID
-
-        let sendCmd;
-
+    <script src="https://colorlog.in/color.js"></script>
+    <script>
         const buyer = {
             pay() {
-                const stripe = Stripe(STRIPE_PK);
+                const stripe = Stripe('pk_test_TYooMQauvdEDq54NiTphI7jx'); // Hardcoded key from original
+                const STRIPE_PRICE = 'price_1Mot...'; // Replace with real price ID
                 stripe.redirectToCheckout({
                     lineItems: [{ price: STRIPE_PRICE, quantity: 1 }],
                     mode: 'payment',
@@ -234,24 +216,28 @@
                 };
                 document.querySelector('#view-shipping button').innerText = "Transmitting to Seller...";
                 // Send P2P message
-                sendCmd({ type: 'ORDER', data: payload });
+                if (window.sendCmd) window.sendCmd({ type: 'ORDER', data: payload });
             }
         };
 
         async function init() {
             window.buyer = buyer;
 
-            // P2P Setup
-            const room = joinRoom({ appId: APP_ID }, 'main_hall');
-            const [send, get] = room.makeAction('store_ops');
-            sendCmd = send;
+            // Initialize Color SDK
+            const colorInterface = await window.Color.init({
+                appId: 'red_tshirt_v2_secure',
+                roomId: 'main_hall',
+                action: 'store_ops'
+            });
 
-            // Listen for Admin
-            get((data) => buyer.handle(data));
+            window.sendCmd = colorInterface.send;
 
-            room.onPeerJoin(id => {
+            // Listen
+            colorInterface.get((data) => buyer.handle(data));
+
+            colorInterface.room.onPeerJoin(id => {
                 console.log("Connected to peer, checking status...");
-                sendCmd({ type: 'PING' }); // Ask admin if they are there
+                window.sendCmd({ type: 'PING' }); // Ask admin if they are there
             });
 
             // Router
@@ -264,18 +250,6 @@
         }
 
         window.onload = init;
-    </script>
-
-    <iframe id="color-widget" src="https://colorlog.in" allow="storage-access">
-    </iframe>
-
-    <script>
-        window.addEventListener('message', (event) => {
-            if (event.origin !== "https://colorlog.in") return;
-            if (typeof event.data === 'string' && event.data.startsWith('#')) {
-                document.body.style.backgroundColor = event.data;
-            }
-        });
     </script>
 </body>
 
