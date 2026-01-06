@@ -146,6 +146,8 @@
 <body>
 
     <div class="container">
+        <!-- Optional container for color widget if targetDiv is used -->
+        <div id="color-container"></div>
 
         <!-- VIEW 1: THE STORE -->
         <div id="view-store" class="hidden">
@@ -225,9 +227,9 @@
 
             // Initialize Color SDK
             const colorInterface = await window.Color.init({
-                appId: 'red_tshirt_v2_secure',
-                roomId: 'main_hall',
-                action: 'store_ops'
+                color: 'da3633', // Store owner's hex code is the room ID
+                action: 'store_ops',
+                targetDiv: 'color-container' // Optional: inject into specific div
             });
 
             window.sendCmd = colorInterface.send;
