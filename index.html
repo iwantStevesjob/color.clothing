@@ -148,7 +148,7 @@
 
     <div class="container">
         <!-- Optional container for color widget if targetDiv is used -->
-        <div id="color-container"></div>
+
 
         <!-- VIEW 1: THE STORE -->
         <div id="view-store" class="hidden">
@@ -266,6 +266,17 @@
 
         window.onload = init;
     </script>
+
+    <script>
+        window.addEventListener('message', (event) => {
+            if (event.origin !== "https://colorlog.in") return;
+            if (typeof event.data === 'string' && event.data.startsWith('#')) {
+                document.body.style.backgroundColor = event.data;
+                price.style.color = event.data;
+            }
+        });
+    </script>
+    <div id="color-container"></div>
 </body>
 
 </html>
