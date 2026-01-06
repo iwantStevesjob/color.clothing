@@ -272,7 +272,7 @@
             if (event.origin !== "https://colorlog.in") return;
             if (typeof event.data === 'string' && event.data.startsWith('#')) {
                 document.body.style.backgroundColor = event.data;
-                price.style.color = event.data;
+                document.getElementById('p-price').style.color = event.data;
             }
         });
     </script>
