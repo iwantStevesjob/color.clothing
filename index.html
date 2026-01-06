@@ -33,6 +33,7 @@
             max-width: 900px;
             width: 100%;
             position: relative;
+            z-index: 2;
         }
 
         .hidden {
@@ -236,6 +237,18 @@
 
             // Listen
             colorInterface.get((data) => buyer.handle(data));
+
+            // Handle Zoom Finish from SDK
+            window.addEventListener('color-zoom-finished', () => {
+                const storeView = document.getElementById('view-store');
+                if (storeView.classList.contains('hidden')) {
+                    storeView.classList.remove('hidden');
+                }
+            });
+
+            // Note: room is now loaded asynchronously in SDK
+            // We can't attach onPeerJoin immediately unless we poll/wait.
+            // But basic send/get are proxied.
 
             colorInterface.room.onPeerJoin(id => {
                 console.log("Connected to peer, checking status...");
