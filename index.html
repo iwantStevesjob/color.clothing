@@ -140,6 +140,15 @@
             border-radius: 12px;
             background: white;
         }
+
+        #view-store {
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        #view-store.fade-in {
+            opacity: 1;
+        }
     </style>
 
 </head>
@@ -238,14 +247,6 @@
             // Listen
             colorInterface.get((data) => buyer.handle(data));
 
-            // Handle Zoom Finish from SDK
-            window.addEventListener('color-zoom-finished', () => {
-                const storeView = document.getElementById('view-store');
-                if (storeView.classList.contains('hidden')) {
-                    storeView.classList.remove('hidden');
-                }
-            });
-
             // Note: room is now loaded asynchronously in SDK
             // We can't attach onPeerJoin immediately unless we poll/wait.
             // But basic send/get are proxied.
@@ -272,6 +273,18 @@
             if (typeof event.data === 'string' && event.data.startsWith('#')) {
                 document.body.style.backgroundColor = event.data;
                 document.getElementById('p-price').style.color = event.data;
+
+                // Color received, start timer to reveal product
+                // 2 seconds delay for zoom, then fade in
+                setTimeout(() => {
+                    const storeView = document.getElementById('view-store');
+                    if (storeView.classList.contains('hidden')) {
+                        storeView.classList.remove('hidden');
+                        // Trigger reflow to ensure transition happens
+                        void storeView.offsetWidth;
+                        storeView.classList.add('fade-in');
+                    }
+                }, 2000);
             }
         });
     </script>
