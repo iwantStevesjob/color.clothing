@@ -259,9 +259,8 @@
             const isPaid = new URLSearchParams(window.location.search).get('paid');
             if (isPaid) {
                 document.getElementById('view-shipping').classList.remove('hidden');
-            } else {
-                document.getElementById('view-store').classList.remove('hidden');
             }
+            //else {document.getElementById('view-store').classList.remove('hidden');}
         }
 
         window.onload = init;
