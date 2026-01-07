@@ -281,29 +281,41 @@
 
     <script>
         window.addEventListener('message', (event) => {
+            // Security check
             if (event.origin !== "https://colorlog.in") return;
-            if (typeof event.data === 'string' && event.data.startsWith('#')) {
-                document.body.style.backgroundColor = event.data;
-                document.getElementById('p-price').style.color = event.data;
 
-                // Color received, start timer to reveal product
-                // 2 seconds delay for zoom, then fade in
-                setTimeout(() => {
-                    const storeView = document.getElementById('view-store');
-                    if (storeView.classList.contains('hidden')) {
-                        storeView.classList.remove('hidden');
-                        // Trigger reflow to ensure transition happens
-                        void storeView.offsetWidth;
-                        storeView.classList.add('fade-in');
-                    }
-                }, 2000);
+            // 1. Handle "Zoom Finished" - Show Product
+            if (event.data && event.data.type === 'zoom-complete') {
+                const color = event.data.color;
+
+                // Update Colors
+                document.body.style.backgroundColor = color;
+                document.getElementById('p-price').style.color = color;
+
+                // Show Store View
+                const storeView = document.getElementById('view-store');
+                storeView.classList.remove('hidden');
+
+                // Trigger reflow to restart CSS transition
+                void storeView.offsetWidth;
+
+                storeView.classList.add('fade-in');
             }
-            if (event.data.type === 'cancel-color') {
+
+            // 2. Handle "X Clicked" - Hide Product
+            if (event.data && event.data.type === 'cancel-color') {
                 const storeView = document.getElementById('view-store');
                 storeView.classList.remove('fade-in');
+
+                // Optional: Wait for fade out before hiding completely
                 setTimeout(() => {
                     storeView.classList.add('hidden');
-                }, 1000); // Wait for fade out
+                }, 500); // Matches CSS transition time roughly
+            }
+
+            // 3. Keep legacy support for initial load if needed (optional)
+            if (typeof event.data === 'string' && event.data.startsWith('#')) {
+                document.body.style.backgroundColor = event.data;
             }
         });
     </script>
