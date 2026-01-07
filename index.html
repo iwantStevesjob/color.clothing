@@ -290,6 +290,13 @@
                     }
                 }, 2000);
             }
+            if (event.data.type === 'cancel-color') {
+                const storeView = document.getElementById('view-store');
+                storeView.classList.remove('fade-in');
+                setTimeout(() => {
+                    storeView.classList.add('hidden');
+                }, 1000); // Wait for fade out
+            }
         });
     </script>
     <div id="color-container"></div>
