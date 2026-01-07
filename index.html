@@ -255,10 +255,18 @@
             // We can't attach onPeerJoin immediately unless we poll/wait.
             // But basic send/get are proxied.
 
-            colorInterface.room.onPeerJoin(id => {
-                console.log("Connected to peer, checking status...");
-                window.sendCmd({ type: 'PING' }); // Ask admin if they are there
-            });
+            // Wait for room to be ready
+            const attachPeerListener = () => {
+                if (colorInterface.room) {
+                    colorInterface.room.onPeerJoin(id => {
+                        console.log("Connected to peer, checking status...");
+                        window.sendCmd({ type: 'PING' });
+                    });
+                } else {
+                    setTimeout(attachPeerListener, 100);
+                }
+            };
+            attachPeerListener();
 
             // Router
             const isPaid = new URLSearchParams(window.location.search).get('paid');
